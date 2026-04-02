@@ -1,7 +1,7 @@
 // Step 3: Define the OpenClaw Execution Tool
 // File: skills/AlpacaTradingSkill.js
 
-import { placePaperTrade } from "../services/alpacaService.js";
+import { executePaperTrade } from "../services/alpacaService.js";
 
 /**
  * Step 3: Create the OpenClaw custom tool definition.
@@ -9,9 +9,9 @@ import { placePaperTrade } from "../services/alpacaService.js";
  * and acts as the bridge to our Alpaca integration.
  */
 export const execute_alpaca_trade = async (intentPayload) => {
-  const { ticker, action, quantity } = intentPayload;
+  const { asset, action, quantity } = intentPayload;
 
-  console.log(`[AlpacaTradingSkill] Tool triggered for ${action} ${quantity} ${ticker}.`);
+  console.log(`[AlpacaTradingSkill] Tool triggered for ${action} ${quantity} ${asset}.`);
 
   // =========================================================================
   // TODO: ArmorClaw Policy Check Goes Here
@@ -25,12 +25,12 @@ export const execute_alpaca_trade = async (intentPayload) => {
       return { status: "success", message: "Holding position. No trade executed." };
     }
 
-    // Call the placePaperTrade function initialized in Step 2 securely.
-    const result = await placePaperTrade(ticker, quantity, action);
+    // Call the executePaperTrade function initialized in Step 2 securely.
+    const result = await executePaperTrade(asset, action, quantity);
     
     return { 
       status: "success", 
-      message: `Successfully executed ${action} for ${quantity} shares of ${ticker}`,
+      message: `Successfully executed ${action} for ${quantity} shares of ${asset}`,
       orderId: result.order.id 
     };
   } catch (error) {

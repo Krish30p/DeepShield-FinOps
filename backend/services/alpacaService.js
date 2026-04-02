@@ -21,19 +21,19 @@ const alpaca = new Alpaca({
 /**
  * A simple function wrapping the Alpaca createOrder endpoint.
  *
- * @param {string} ticker - The stock symbol (e.g., 'AAPL')
+ * @param {string} asset - The stock symbol (e.g., 'AAPL')
  * @param {number} qty - The number of shares to trade
  * @param {string} side - 'buy' or 'sell'
  */
-export const placePaperTrade = async (ticker, qty, side) => {
+export const executePaperTrade = async (asset, action, qty) => {
   try {
-    console.log(`[Alpaca Service] Attempting to ${side} ${qty} shares of ${ticker}...`);
+    console.log(`[Alpaca Service] Attempting to ${action} ${qty} shares of ${asset}...`);
     
     // Create market order through the Alpaca Paper API
     const order = await alpaca.createOrder({
-      symbol: ticker,
+      symbol: asset,
       qty: qty,
-      side: side.toLowerCase(), // Alpaca expects lowercase 'buy' or 'sell'
+      side: action.toLowerCase(), // Alpaca expects lowercase 'buy' or 'sell'
       type: "market",
       time_in_force: "day", // Order is valid for the current trading day
     });
