@@ -2,6 +2,7 @@
 // File: skills/AlpacaTradingSkill.js
 
 import { executePaperTrade } from "../services/alpacaService.js";
+import { evaluatePolicy } from "../services/armorClawService.js";
 import AuditLog from "../models/AuditLog.js";
 
 /**
@@ -25,14 +26,15 @@ export const execute_alpaca_trade = async (intentPayload) => {
   await auditLog.save();
 
   // =========================================================================
-  // TODO: ArmorClaw Middleware Policy Check Goes Here
-  // E.g., evaluateArmorClawPolicy(intentPayload)
-  // if (!allowed) {
-  //   auditLog.status = "BLOCKED";
-  //   auditLog.block_reason = reason;
-  //   await auditLog.save();
-  //   return { status: "blocked", message: reason };
-  // }
+  // ArmorClaw Middleware Policy Check
+  const policyResult = evaluatePolicy(intentPayload);
+  
+  if (!policyResult.allowed) {
+    auditLog.status = "BLOCKED";
+    auditLog.block_reason = policyResult.reason;
+    await auditLog.save();
+    return { status: "blocked", message: policyResult.reason };
+  }
   // =========================================================================
 
   try {
