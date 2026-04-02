@@ -1,0 +1,21 @@
+{
+  "policyName": "Strict Financial Security Guardrails",
+  "version": "1.0",
+  "rules": {
+    "allowed_tickers": {
+      "type": "enum",
+      "values": ["AAPL", "MSFT", "NVDA", "GOOGL"],
+      "message": "Ticker is not explicitly authorized for trading."
+    },
+    "max_order_notional": {
+      "type": "max_value",
+      "value": 10000,
+      "message": "Order size exceeds the strict $10,000 limit."
+    },
+    "required_provenance": {
+      "type": "regex",
+      "pattern": "^https:\\/\\/www\\.sec\\.gov\\/.*$",
+      "message": "Provenance URL fails cryptographic/SEC verification bounds."
+    }
+  }
+}
