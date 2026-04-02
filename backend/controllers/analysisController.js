@@ -68,9 +68,9 @@ export const triggerAnalysisPipeline = async (req, res) => {
     // Partial intent saving logic could be added if intent was generated.
     await auditLog.save();
 
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
-      message: "Pipeline failed.",
+      message: "Pipeline failed due to malformed context or agent guardrails.",
       error: error.message,
     });
   }
