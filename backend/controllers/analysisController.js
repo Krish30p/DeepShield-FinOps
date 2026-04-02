@@ -1,8 +1,6 @@
 import { runIngestionAgent } from "../agents/ingestionAgent.js";
 import { runVerificationAgent } from "../agents/verificationAgent.js";
-import { runExecutionAgent } from "../agents/executionAgent.js";
-import { evaluatePolicy } from "../services/armorClawService.js";
-import AuditLog from "../models/AuditLog.js";
+import { execute_alpaca_trade } from "../skills/AlpacaTradingSkill.js";
 
 export const triggerAnalysisPipeline = async (req, res) => {
   const { newsText } = req.body;
@@ -18,55 +16,29 @@ export const triggerAnalysisPipeline = async (req, res) => {
     // Pipeline Step 2: Verification
     const intentPayload = await runVerificationAgent(ingestionData);
 
-    // Initial Audit Log creation
-    let auditLog = new AuditLog({
-      agent: "VerificationAgent",
-      intent_payload: intentPayload,
-      status: "Pending",
-    });
+    // Pipeline Step 3 & 4: Execution Skill (Contains ArmorClaw + Logging)
+    const executionResult = await execute_alpaca_trade(intentPayload);
 
-    // Pipeline Step 3: Middleware ArmorClaw Evaluation
-    const policyResult = evaluatePolicy(intentPayload);
-
-    if (!policyResult.allowed) {
-      // ArmorClaw Blocked the action
-      auditLog.agent = "ArmorClaw";
-      auditLog.status = "Blocked";
-      auditLog.block_reason = policyResult.reason;
-      await auditLog.save();
-
+    if (executionResult.status === "blocked" || executionResult.status === "error") {
       return res.status(403).json({
         success: false,
-        message: "ArmorClaw blocked the execution.",
-        reason: policyResult.reason,
-        intentPayload,
+        message: executionResult.message,
+        intentPayload
       });
     }
-
-    // Pipeline Step 4: Execution
-    const executionResult = await runExecutionAgent(intentPayload);
-
-    // ArmorClaw Allowed -> Log Execution Success
-    auditLog.agent = "ExecutionAgent";
-    auditLog.status = "Executed";
-    await auditLog.save();
 
     return res.status(200).json({
       success: true,
       message: executionResult.message,
       intentPayload,
-      order: executionResult.order,
+      orderId: executionResult.orderId,
     });
   } catch (error) {
     console.error("[Pipeline Error]", error.message);
     
-    const auditLog = new AuditLog({
-      agent: "ExecutionAgent",
-      status: "Failed",
-      block_reason: error.message,
-    });
-    // Partial intent saving logic could be added if intent was generated.
-    await auditLog.save();
+    console.error("[Pipeline Error]", error.message);
+    // Any overarching failures not caught inside agents
+
 
     return res.status(400).json({
       success: false,
@@ -78,7 +50,7 @@ export const triggerAnalysisPipeline = async (req, res) => {
 
 export const getAuditLogs = async (req, res) => {
   try {
-    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(50);
+    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(20);
     res.status(200).json(logs);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch logs" });

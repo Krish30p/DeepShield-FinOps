@@ -7,6 +7,6 @@ const router = express.Router();
 router.post("/trigger-analysis", triggerAnalysisPipeline);
 
 // Get Audit Logs for Frontend Dashboard
-router.get("/audit-logs", getAuditLogs);
+router.get("/logs", getAuditLogs);
 
 export default router;

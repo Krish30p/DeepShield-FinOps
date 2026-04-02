@@ -12,7 +12,7 @@ export default function Dashboard() {
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/api/audit-logs");
+      const response = await axios.get("http://localhost:4000/api/logs");
       setLogs(response.data);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchLogs();
-    const interval = setInterval(fetchLogs, 3000); // Poll every 3 seconds
+    const interval = setInterval(fetchLogs, 2000); // Poll every 2 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -175,33 +175,33 @@ export default function Dashboard() {
                     <div 
                       key={log._id} 
                       className={`relative overflow-hidden p-5 rounded-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                        log.status === 'Executed' || log.status === 'Allowed'
+                        log.status === 'EXECUTED' 
                           ? 'bg-emerald-950/20 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-emerald-900/20'
-                          : log.status === 'Blocked' || log.status === 'Failed'
+                          : log.status === 'BLOCKED' || log.status === 'FAILED'
                           ? 'bg-rose-950/20 border-rose-500/20 hover:border-rose-500/40 hover:shadow-rose-900/20'
                           : 'bg-slate-800/30 border-slate-700/50'
                       }`}
                     >
                       {/* Left status color accent */}
                       <div className={`absolute top-0 left-0 w-1 h-full ${
-                        log.status === 'Executed' || log.status === 'Allowed' ? 'bg-emerald-500' :
-                        log.status === 'Blocked' || log.status === 'Failed' ? 'bg-rose-500' : 'bg-slate-500'
+                        log.status === 'EXECUTED' ? 'bg-emerald-500' :
+                        log.status === 'BLOCKED' || log.status === 'FAILED' ? 'bg-rose-500' : 'bg-slate-500'
                       }`} />
 
                       <div className="flex justify-between items-start mb-3 pl-2">
                         <div className="flex items-center gap-3">
-                          {log.status === 'Executed' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                          {log.status === 'Blocked' && <XOctagon className="w-5 h-5 text-rose-500" />}
-                          {(log.status === 'Pending' || log.status === 'Failed') && <ShieldAlert className="w-5 h-5 text-slate-500" />}
+                          {log.status === 'EXECUTED' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                          {log.status === 'BLOCKED' && <XOctagon className="w-5 h-5 text-rose-500" />}
+                          {(log.status === 'PENDING' || log.status === 'FAILED') && <ShieldAlert className="w-5 h-5 text-slate-500" />}
                           
                           <div>
-                            <span className="text-sm font-bold text-white block">{log.agent}</span>
+                            <span className="text-sm font-bold text-white block">Alpaca Agent</span>
                             <span className="text-xs text-slate-400 block">{new Date(log.timestamp).toLocaleString()}</span>
                           </div>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border space-x-1 ${
-                          log.status === 'Executed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          log.status === 'Blocked' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                          log.status === 'EXECUTED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          log.status === 'BLOCKED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
                           'bg-slate-500/10 text-slate-400 border-slate-500/20'
                         }`}>
                           {log.status}
@@ -209,32 +209,29 @@ export default function Dashboard() {
                       </div>
 
                       <div className="pl-2 space-y-2 text-sm max-w-full">
-                        {log.intent_payload && log.intent_payload.ticker && (
+                        {log.asset && (
                           <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <span className="font-mono text-xs text-indigo-300 font-bold bg-indigo-500/10 px-2 py-1 rounded">
-                                {log.intent_payload.action} {log.intent_payload.ticker}
+                                {log.action} {log.asset}
                               </span>
-                              <span className="text-slate-300 font-mono text-xs">Qty: {log.intent_payload.quantity}</span>
+                              <span className="text-slate-300 font-mono text-xs">Qty: {log.quantity}</span>
                             </div>
-                            <span className="text-slate-500 text-xs max-w-[40%] truncate" title={log.intent_payload.rationale}>
-                              {log.intent_payload.rationale}
-                            </span>
                           </div>
                         )}
                         
-                        {log.status === 'Blocked' && log.block_reason && (
+                        {log.status === 'BLOCKED' && log.block_reason && (
                           <div className="mt-3 text-rose-400 text-xs font-medium flex items-start gap-2 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10">
                             <span className="mt-0.5">⚠️</span>
                             <span>{log.block_reason}</span>
                           </div>
                         )}
                         
-                        {log.intent_payload && log.intent_payload.verification_provenance && (
+                        {log.verification_provenance && (
                           <div className="text-xs mt-2 truncate max-w-full flex items-center gap-2">
                             <span className="text-slate-500 shrink-0">Provenance:</span> 
                             <a href="#" className="font-mono text-indigo-400 hover:text-indigo-300 hover:underline truncate">
-                              {log.intent_payload.verification_provenance}
+                              {log.verification_provenance}
                             </a>
                           </div>
                         )}
