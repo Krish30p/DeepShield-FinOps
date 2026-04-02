@@ -1,6 +1,7 @@
 import { runIngestionAgent } from "../agents/ingestionAgent.js";
 import { runVerificationAgent } from "../agents/verificationAgent.js";
 import { execute_alpaca_trade } from "../skills/AlpacaTradingSkill.js";
+import AuditLog from "../models/AuditLog.js";
 
 export const triggerAnalysisPipeline = async (req, res) => {
   const { newsText } = req.body;
@@ -53,6 +54,7 @@ export const getAuditLogs = async (req, res) => {
     const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(20);
     res.status(200).json(logs);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch logs" });
+    console.error("[getAuditLogs Error]", error.message);
+    res.status(500).json({ error: "Failed to fetch logs", details: error.message });
   }
 };
