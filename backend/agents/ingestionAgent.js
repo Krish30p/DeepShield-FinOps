@@ -9,10 +9,10 @@ export const runIngestionAgent = async (newsText) => {
   const upperText = newsText.toUpperCase();
 
   // Basic sentiment heuristics for hackathon
-  if (upperText.includes("BULLISH") || upperText.includes("SOARING") || upperText.includes("PARTNERSHIP")) {
+  if (upperText.includes("BULLISH") || upperText.includes("SOARING") || upperText.includes("PARTNERSHIP") || upperText.includes("EARNINGS") || upperText.includes("BUY")) {
     sentiment = "POSITIVE";
     recommendedAction = "BUY";
-  } else if (upperText.includes("BEARISH") || upperText.includes("CRASH") || upperText.includes("FRAUD")) {
+  } else if (upperText.includes("BEARISH") || upperText.includes("CRASH") || upperText.includes("FRAUD") || upperText.includes("SCANDAL") || upperText.includes("RESIGN") || upperText.includes("SELL")) {
     sentiment = "NEGATIVE";
     recommendedAction = "SELL";
   }
