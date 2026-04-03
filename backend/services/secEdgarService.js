@@ -249,20 +249,51 @@ export const searchEDGARFilings = async (ticker, newsContext) => {
     // Pad CIK to 10 digits for the SEC API
     const paddedCIK = String(info.cik).padStart(10, "0");
 
+    // Extract key words from the news context to prevent fake rumors from matching
+    // Filter out common action words and short words
+    const ignoreWords = new Set(["BUY", "SELL", "HOLD", "SHARES", "STOCK", "TRADE", "BASED", "FROM", "THE", "AND", "WITH", "FOR", "THAT", "THIS", "HAVE", "ARE", "HAS", "BEEN", "SEC", "FILING", "RUMOR", "TWITTER", "MEDIUM", "BLOG", "POST", "TWEET", "SEC.GOV", "GOV", ticker.toUpperCase()]);
+    
+    const words = (newsContext || "")
+      .replace(/[^a-zA-Z0-9\s]/g, " ")
+      .split(/\s+/)
+      .map(w => w.toUpperCase())
+      .filter(w => w.length > 3 && !ignoreWords.has(w));
+    
+    // Take up to 3 most important keywords to require in the document
+    const keywords = words.slice(0, 3);
+    
+    // Build query forcing AND matching using the + operator
+    let qString = `+${ticker}`;
+    for (const kw of keywords) {
+      qString += ` +${kw}`;
+    }
+    
     // Strategy 1: Try EFTS full-text search (unofficial but widely used)
     try {
-      const searchQuery = encodeURIComponent(`"${info.companyName || ticker}"`);
+      const searchQuery = encodeURIComponent(qString);
       const eftsUrl = `${EFTS_SEARCH_URL}?q=${searchQuery}&forms=8-K,10-K,10-Q&dateRange=custom&startdt=${getDateDaysAgo(90)}&enddt=${getTodayDate()}`;
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout for unofficial EFTS
+
       const eftsResponse = await fetch(eftsUrl, {
         headers: { 
           "User-Agent": SEC_USER_AGENT,
           "Accept": "application/json",
         },
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (eftsResponse.ok) {
         const eftsData = await eftsResponse.json();
+        
+        // Check if the query returned 0 matches across the SEC database
+        if (eftsData.hits && eftsData.hits.total && eftsData.hits.total.value === 0) {
+           console.log(`[SEC Service] ⚠️ Provenance check failed: 0 SEC filings contain the rumor keywords.`);
+           return { found: false, filingUrl: null, filingTitle: null, filingDate: null };
+        }
+
         if (eftsData.hits && eftsData.hits.hits && eftsData.hits.hits.length > 0) {
           const topHit = eftsData.hits.hits[0]._source || eftsData.hits.hits[0];
           const filingUrl = topHit.file_url 
@@ -283,9 +314,14 @@ export const searchEDGARFilings = async (ticker, newsContext) => {
 
     // Strategy 2: Fall back to official submissions API
     const submissionsUrl = `${SUBMISSIONS_URL}/CIK${paddedCIK}.json`;
+    const subController = new AbortController();
+    const subTimeoutId = setTimeout(() => subController.abort(), 4000); // 4 second timeout
+
     const subResponse = await fetch(submissionsUrl, {
       headers: { "User-Agent": SEC_USER_AGENT },
+      signal: subController.signal
     });
+    clearTimeout(subTimeoutId);
 
     if (subResponse.ok) {
       const subData = await subResponse.json();
