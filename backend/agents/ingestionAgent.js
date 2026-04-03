@@ -17,17 +17,30 @@ export const runIngestionAgent = async (newsText) => {
     recommendedAction = "SELL";
   }
 
-  // Find ticker
-  const possibleTickers = ["AAPL", "MSFT", "NVDA", "GOOGL", "TSLA"];
-  for (const t of possibleTickers) {
-    if (upperText.includes(t)) {
-      tickerMatch = t;
-      break;
+  // Find ticker: Blindly extract any symbol mentioned
+  // Logic: First look for a 1-5 character uppercase word that follows "Buy", "Sell", "of", or "is"
+  const tickerRegex = /\b(?:BUY|SELL|OF|IS)\s+([A-Z]{1,5})\b/i;
+  const match = newsText.match(tickerRegex);
+  
+  if (match) {
+    tickerMatch = match[1].toUpperCase();
+  } else {
+    // Fallback: Look for the first 1-5 character uppercase word that isn't a common keyword
+    const generalTickerRegex = /\b([A-Z]{1,5})\b/g;
+    const allMatches = [...newsText.matchAll(generalTickerRegex)];
+    const keywords = ["BUY", "SELL", "SHARES", "STOCK", "TRADE", "OF", "THE", "IS", "FOR"];
+    
+    for (const m of allMatches) {
+      if (!keywords.includes(m[1].toUpperCase())) {
+        tickerMatch = m[1].toUpperCase();
+        break;
+      }
     }
   }
 
+  // If still no ticker, use a default placeholder to keep the pipeline alive for ArmorClaw to block
   if (!tickerMatch) {
-    throw new Error("No recognized ticker found in the ingested data.");
+    tickerMatch = "UNKNOWN";
   }
 
   return {
