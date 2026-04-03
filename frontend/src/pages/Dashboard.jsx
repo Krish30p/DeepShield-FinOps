@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shield, ShieldAlert, Activity, Cpu, Server, CheckCircle2, XOctagon, LogOut, Zap, Lock, Search, Send } from "lucide-react";
+import AuthModal from "../components/AuthModal";
 
 // ── Pipeline step metadata ──
 const PIPELINE_STEPS = [
@@ -27,6 +28,14 @@ export default function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePipelineStep, setActivePipelineStep] = useState(0); // 0 = idle, 1-4 = step in progress, 5 = all done
   const timeoutsRef = useRef([]);
+
+  // ── Freemium State ──
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoggedIn] = useState(() => !!localStorage.getItem("token"));
+  const [trialCount, setTrialCount] = useState(() => {
+    return parseInt(localStorage.getItem("deepshield_trials")) || 0;
+  });
+  const MAX_TRIALS = 3;
 
   // ── Fetch audit logs ──
   const fetchLogs = useCallback(async () => {
@@ -59,10 +68,22 @@ export default function Dashboard() {
     return "idle";                                       // not yet reached
   };
 
-  // ── NEW: The sequential pipeline trigger ──
+  // ── The sequential pipeline trigger ──
   const handleTriggerPipeline = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!newsInput || isProcessing) return;
+
+    // ── Freemium gate: logged-in users bypass, guests get 3 free runs ──
+    if (!isLoggedIn) {
+      if (trialCount >= MAX_TRIALS) {
+        setShowAuthModal(true);
+        return;
+      }
+      // Increment guest trial count
+      const newCount = trialCount + 1;
+      setTrialCount(newCount);
+      localStorage.setItem("deepshield_trials", newCount.toString());
+    }
 
     // Reset previous results
     setIsProcessing(true);
@@ -120,8 +141,15 @@ export default function Dashboard() {
     timeoutsRef.current.push(resetId);
   };
 
+
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-300 font-sans selection:bg-indigo-500/30">
+      {/* ── Auth Modal — only shows after trials exhausted ── */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
+
       {/* Dynamic Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px]" />
