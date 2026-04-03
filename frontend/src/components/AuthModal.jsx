@@ -1,5 +1,5 @@
 import React from "react";
-import { X, UserPlus, LogIn, ShieldAlert } from "lucide-react";
+import { X, UserPlus, LogIn, ShieldAlert, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function AuthModal({ onClose }) {
@@ -9,60 +9,63 @@ export default function AuthModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+        className="modal-backdrop absolute inset-0 bg-[#050a14]/80 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+      <div className="modal-content relative w-full max-w-md bento-card overflow-hidden">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-700 z-10"
+          className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors duration-300 p-1.5 rounded-lg hover:bg-slate-800 z-10 cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
+
+        {/* Ambient Top Glow */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500/20 via-rose-500/50 to-orange-500/20" />
 
         {/* Body */}
         <div className="p-8 text-center space-y-6">
           {/* Icon */}
-          <div className="inline-flex items-center justify-center p-4 bg-amber-500/15 rounded-2xl border border-amber-500/30">
-            <ShieldAlert className="w-10 h-10 text-amber-400" />
+          <div className="inline-flex items-center justify-center p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+            <ShieldAlert className="w-8 h-8 text-rose-400" />
           </div>
 
           {/* Title */}
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Free Trials Exhausted</h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              You've used all <span className="text-amber-400 font-semibold">3 free guest trials</span>. 
-              Create an account to unlock unlimited pipeline executions, historical provenance tracking, and full agent customization.
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white tracking-tight">Access Restricted</h2>
+            <p className="text-slate-400 text-sm leading-relaxed px-4">
+              Your free guest trials are exhausted. Please log in to unlock unlimited analysis and historical provenance tracking.
             </p>
           </div>
 
           {/* Warning badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-full">
-            <span className="relative flex h-2 w-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 border border-slate-800 rounded-full">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
             </span>
-            <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider">3/3 Trials Used</span>
+            <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">3/3 Trials Used</span>
           </div>
 
           {/* Action buttons */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800/60">
             <button
               onClick={() => navigate("/login")}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold transition-all cursor-pointer border border-slate-600"
+              className="group btn-press flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium transition-all duration-300 ease-out cursor-pointer border border-slate-700/50"
             >
-              <LogIn className="w-4 h-4" />
-              Login
+              <LogIn className="w-4 h-4 text-slate-400" />
+              <span className="text-sm">Login</span>
             </button>
+
             <button
               onClick={() => navigate("/register")}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-semibold shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
+              className="group btn-press flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-medium shadow-lg shadow-white/5 transition-all duration-300 ease-out cursor-pointer"
             >
-              <UserPlus className="w-4 h-4" />
-              Register
+              <span className="text-sm">Register</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
             </button>
           </div>
         </div>

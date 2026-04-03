@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL, API_PATHS } from "../utils/apiPath";
+import { Shield, UserPlus } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -58,87 +59,97 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold text-center mb-6">
-          DeepShield FinOps Register
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-[#050a14] relative overflow-hidden text-slate-300">
+      {/* Ambient glow — very subtle */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] right-[-15%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[150px]" />
+        <div className="absolute bottom-[-20%] left-[-15%] w-[40%] h-[40%] rounded-full bg-slate-800/20 blur-[150px]" />
+      </div>
 
-        {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
-            {error}
-          </p>
-        )}
-
-        {/* Name */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Enter your name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring"
-          />
+      <div className="relative z-10 w-full max-w-md px-4">
+        {/* Logo / Branding */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 mb-4 transition-all duration-300 hover:bg-indigo-500/15">
+            <Shield className="w-8 h-8 text-indigo-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Create Account</h1>
+          <p className="text-slate-500 text-sm mt-1.5 font-medium tracking-wide">Join DeepShield FinOps</p>
         </div>
 
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring"
-          />
-        </div>
-
-        {/* Password */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">
-            Password
-          </label>
-          <input
-            type="password"
-            name="password"
-            placeholder="Create a password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition disabled:opacity-60"
+        {/* Register Card */}
+        <form
+          onSubmit={handleSubmit}
+          className="bento-card p-8 space-y-5"
         >
-          {loading ? "Registering..." : "Register"}
-        </button>
+          {error && (
+            <div className="bg-rose-500/5 border border-rose-500/20 text-rose-400 text-sm p-3 rounded-xl text-center">
+              {error}
+            </div>
+          )}
 
-        <p className="text-sm text-center mt-4">
-          Already have an account?{" "}
-          <span
-            onClick={() => navigate("/login")}
-            className="text-black font-medium cursor-pointer underline"
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Name</label>
+            <input
+              type="text"
+              name="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 bg-slate-900/40 border border-slate-700/40 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 focus:bg-slate-900/60 transition-all duration-300 ease-out"
+              placeholder="John Doe"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 bg-slate-900/40 border border-slate-700/40 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 focus:bg-slate-900/60 transition-all duration-300 ease-out"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 bg-slate-900/40 border border-slate-700/40 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 focus:bg-slate-900/60 transition-all duration-300 ease-out"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="group btn-press w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-xl shadow-lg shadow-white/5 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
-            Login
-          </span>
-        </p>
-      </form>
+            {loading ? "Registering..." : (
+              <>
+                <span>Register</span>
+                <UserPlus className="w-4 h-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
+              </>
+            )}
+          </button>
+
+          <p className="text-sm text-center text-slate-500 mt-6">
+            Already have an account?{" "}
+            <span
+              onClick={() => navigate("/login")}
+              className="text-indigo-400 font-medium cursor-pointer hover:text-indigo-300 transition-colors"
+            >
+              Login
+            </span>
+          </p>
+        </form>
+      </div>
     </div>
   );
 };
