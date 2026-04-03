@@ -18,6 +18,7 @@ export const triggerAnalysisPipeline = async (req, res) => {
     const intentPayload = await runVerificationAgent(ingestionData);
 
     // Pipeline Step 3 & 4: Execution Skill (Contains ArmorClaw + Logging)
+    intentPayload.clientId = req.headers["x-client-id"] || "anonymous";
     const executionResult = await execute_alpaca_trade(intentPayload);
 
     if (executionResult.status === "blocked" || executionResult.status === "error") {
@@ -51,7 +52,8 @@ export const triggerAnalysisPipeline = async (req, res) => {
 
 export const getAuditLogs = async (req, res) => {
   try {
-    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(20);
+    const clientId = req.headers["x-client-id"] || "anonymous";
+    const logs = await AuditLog.find({ clientId }).sort({ timestamp: -1 }).limit(20);
     res.status(200).json(logs);
   } catch (error) {
     console.error("[getAuditLogs Error]", error.message);

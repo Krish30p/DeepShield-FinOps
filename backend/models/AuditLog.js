@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const auditLogSchema = new mongoose.Schema({
+  clientId: { type: String, required: true },
   asset: { type: String, required: true },
   action: { type: String, enum: ["BUY", "SELL", "HOLD"], required: true },
   quantity: { type: Number, required: true },

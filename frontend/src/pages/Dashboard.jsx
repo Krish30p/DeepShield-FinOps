@@ -32,11 +32,21 @@ export default function Dashboard() {
   const [trialCount, setTrialCount] = useState(() => {
     return parseInt(localStorage.getItem("deepshield_trials")) || 0;
   });
+  const [clientId] = useState(() => {
+    let id = localStorage.getItem("deepshield_client_id");
+    if (!id) {
+      id = "client_" + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem("deepshield_client_id", id);
+    }
+    return id;
+  });
   const MAX_TRIALS = 3;
 
   const fetchLogs = useCallback(async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/api/logs`);
+      const response = await axios.get(`${BASE_URL}/api/logs`, {
+        headers: { "x-client-id": clientId }
+      });
       setLogs(response.data);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
@@ -97,6 +107,8 @@ export default function Dashboard() {
     try {
       const response = await axios.post(`${BASE_URL}/api/trigger-analysis`, {
         newsText: newsInput,
+      }, {
+        headers: { "x-client-id": clientId }
       });
       apiResult = { type: "success", data: response.data };
     } catch (error) {

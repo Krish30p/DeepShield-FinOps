@@ -11,12 +11,13 @@ import AuditLog from "../models/AuditLog.js";
  * and acts as the bridge to our Alpaca integration.
  */
 export const execute_alpaca_trade = async (intentPayload) => {
-  const { asset, action, quantity, verification_provenance } = intentPayload;
+  const { asset, action, quantity, verification_provenance, clientId } = intentPayload;
 
   console.log(`[AlpacaTradingSkill] Tool triggered for ${action} ${quantity} ${asset}.`);
 
   // Log Intent: Create an initial AuditLog entry with status 'PENDING'
   let auditLog = new AuditLog({
+    clientId,
     asset,
     action,
     quantity,
