@@ -3,14 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shield, ShieldAlert, Activity, Cpu, Server, CheckCircle2, XOctagon, LogOut, Zap, Lock, Search, Send, ArrowRight } from "lucide-react";
 import AuthModal from "../components/AuthModal";
+import PipelineFlow from "../components/PipelineFlow";
 import { BASE_URL } from "../utils/apiPath";
-
-const PIPELINE_STEPS = [
-  { name: "Ingestion Agent", icon: Search, description: "Reading & parsing news data..." },
-  { name: "Verification Agent", icon: Shield, description: "Cross-referencing SEC.gov..." },
-  { name: "ArmorClaw Middleware", icon: Lock, description: "Enforcing guardrail policies..." },
-  { name: "Execution Agent", icon: Send, description: "Sending order to Alpaca..." },
-];
 
 const STEP_DELAYS = [0, 1500, 3000, 4500];
 const PIPELINE_COMPLETE_DELAY = 6000;
@@ -24,6 +18,7 @@ export default function Dashboard() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePipelineStep, setActivePipelineStep] = useState(0);
+  const [pipelineStatus, setPipelineStatus] = useState("idle");
   const timeoutsRef = useRef([]);
 
   // Freemium
@@ -62,14 +57,6 @@ export default function Dashboard() {
     };
   }, [fetchLogs]);
 
-  const getStepState = (stepIndex) => {
-    const stepNum = stepIndex + 1;
-    if (activePipelineStep === 0) return "idle";
-    if (stepNum < activePipelineStep) return "complete";
-    if (stepNum === activePipelineStep) return "active";
-    return "idle";
-  };
-
   const handleTriggerPipeline = async (e) => {
     if (e) e.preventDefault();
     if (!newsInput || isProcessing) return;
@@ -87,48 +74,85 @@ export default function Dashboard() {
     setIsProcessing(true);
     setSimulationResult(null);
     setActivePipelineStep(0);
+    setPipelineStatus("running");
 
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
 
-    const animationDone = new Promise((resolve) => {
-      STEP_DELAYS.forEach((delay, i) => {
-        const id = setTimeout(() => setActivePipelineStep(i + 1), delay);
+    // 1. Kick off API call independently
+    const apiPromise = axios.post(`${BASE_URL}/api/trigger-analysis`, {
+        newsText: newsInput,
+    }, {
+        headers: { "x-client-id": clientId }
+    }).then(res => ({ type: "success", data: res.data }))
+      .catch(err => ({ type: "error", data: err.response?.data || { message: "Network Error" } }));
+
+    // Helper to keep timeouts tracked
+    const sleep = (ms) => new Promise(resolve => {
+        const id = setTimeout(resolve, ms);
         timeoutsRef.current.push(id);
-      });
-      const doneId = setTimeout(() => {
-        setActivePipelineStep(5);
-        resolve();
-      }, PIPELINE_COMPLETE_DELAY);
-      timeoutsRef.current.push(doneId);
     });
 
-    let apiResult;
-    try {
-      const response = await axios.post(`${BASE_URL}/api/trigger-analysis`, {
-        newsText: newsInput,
-      }, {
-        headers: { "x-client-id": clientId }
-      });
-      apiResult = { type: "success", data: response.data };
-    } catch (error) {
-      apiResult = {
-        type: "error",
-        data: error.response?.data || { message: "Network Error" },
-      };
-    }
+    // 2. Run visual animation concurrently
+    const runAnimation = async () => {
+        const failStep = 3;
+        let isB = false;
 
-    await animationDone;
+        // Peak into the API response whenever it finishes
+        apiPromise.then(res => {
+            isB = res.type === "error" || res.data?.status === "BLOCKED";
+        });
+
+        for (let i = 0; i < 4; i++) {
+            const stepNum = i + 1;
+            
+            if (i > 0) await sleep(1500);
+            
+            // If the API returned and blocked AND this is or has passed the failStep
+            if (isB && stepNum >= failStep) {
+                setActivePipelineStep(failStep);
+                setPipelineStatus("blocked");
+                return; // Stop animation loop here
+            }
+
+            setActivePipelineStep(stepNum);
+        }
+
+        // 3. Re-scan API final outcome 
+        const finalRes = await apiPromise;
+        const finalIsBlocked = finalRes.type === "error" || finalRes.data?.status === "BLOCKED";
+
+        if (finalIsBlocked) {
+            setActivePipelineStep(failStep);
+            setPipelineStatus("blocked");
+        } else {
+            await sleep(1500); // the execution-to-completion buffer
+            setActivePipelineStep(5);
+            setPipelineStatus("success");
+        }
+    };
+
+    const animationPromise = runAnimation();
+
+    // End flow
+    const [apiResult] = await Promise.all([apiPromise, animationPromise]);
+
+    const isBlocked = apiResult.type === "error" || apiResult.data?.status === "BLOCKED";
 
     setSimulationResult(apiResult);
     await fetchLogs();
     setNewsInput("");
 
-    const resetId = setTimeout(() => {
+    if (!isBlocked) {
+      const resetId = setTimeout(() => {
+        setIsProcessing(false);
+        setActivePipelineStep(0);
+        setPipelineStatus("idle");
+      }, 1200);
+      timeoutsRef.current.push(resetId);
+    } else {
       setIsProcessing(false);
-      setActivePipelineStep(0);
-    }, 1200);
-    timeoutsRef.current.push(resetId);
+    }
   };
 
   return (
@@ -236,104 +260,11 @@ export default function Dashboard() {
             </div>
 
             {/* Pipeline Flow */}
-            <div className="bento-card p-6 relative overflow-hidden">
-              {isProcessing && (
-                <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none transition-opacity duration-500" />
-              )}
-
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-5 flex items-center gap-2 relative z-10">
-                <Server className="w-4 h-4 text-slate-500" />
-                Pipeline Flow
-                {isProcessing && (
-                  <span className="ml-auto text-[10px] text-indigo-400/70 font-medium normal-case tracking-normal" style={{animation: 'subtle-pulse 2s ease-in-out infinite'}}>
-                    Processing...
-                  </span>
-                )}
-                {activePipelineStep === 5 && (
-                  <span className="ml-auto text-[10px] text-emerald-400/70 font-medium normal-case tracking-normal">
-                    ✓ Complete
-                  </span>
-                )}
-              </h3>
-
-              <div className="space-y-1.5 relative z-10">
-                {PIPELINE_STEPS.map((step, i) => {
-                  const state = getStepState(i);
-                  const StepIcon = step.icon;
-
-                  return (
-                    <div key={i}>
-                      {/* Connector */}
-                      {i > 0 && (
-                        <div className="ml-[11px] -my-0.5">
-                          <div className={`w-px h-3 transition-all duration-700 ease-out ${
-                            state === "complete" || state === "active"
-                              ? "bg-indigo-500/30"
-                              : "bg-slate-800"
-                          }`} />
-                        </div>
-                      )}
-
-                      {/* Step row */}
-                      <div className={`pipeline-step-${state} flex items-center gap-3`}>
-                        {/* Dot */}
-                        <div className={`pipeline-dot flex items-center justify-center w-6 h-6 rounded-full border-2 text-[10px] font-bold shrink-0 transition-all duration-500 ease-out ${
-                          state === "active"
-                            ? "border-indigo-500 bg-indigo-500 text-white"
-                            : state === "complete"
-                            ? "border-emerald-500/50 bg-emerald-500 text-white"
-                            : "border-slate-700 bg-slate-800 text-slate-500"
-                        }`}>
-                          {state === "complete" ? "✓" : i + 1}
-                        </div>
-
-                        {/* Label card */}
-                        <div className={`pipeline-label flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all duration-500 ease-out ${
-                          state === "active"
-                            ? "bg-indigo-500/8 border-indigo-500/30"
-                            : state === "complete"
-                            ? "bg-emerald-500/5 border-emerald-500/20"
-                            : "bg-slate-800/30 border-slate-800/60"
-                        }`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <StepIcon className={`w-3.5 h-3.5 transition-colors duration-300 ${
-                                state === "active" ? "text-indigo-400" :
-                                state === "complete" ? "text-emerald-400" :
-                                "text-slate-600"
-                              }`} />
-                              <span className={`pipeline-label-text font-medium text-xs transition-colors duration-300 ${
-                                state === "active" ? "text-indigo-300" :
-                                state === "complete" ? "text-emerald-300/80" :
-                                "text-slate-500"
-                              }`}>
-                                {step.name}
-                              </span>
-                            </div>
-
-                            {state === "active" && (
-                              <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                              </span>
-                            )}
-                            {state === "complete" && (
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400/60" />
-                            )}
-                          </div>
-
-                          {state === "active" && (
-                            <p className="pipeline-status-text text-[10px] text-indigo-400/50 mt-1.5 font-medium">
-                              {step.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <PipelineFlow 
+              activeStep={activePipelineStep}
+              status={pipelineStatus}
+              isProcessing={isProcessing}
+            />
           </div>
 
           {/* ── Right Column: Audit Log ── */}

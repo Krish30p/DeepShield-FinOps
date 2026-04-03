@@ -16,6 +16,11 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+body {
+  background-color: var(--bg-primary);
+  color: #cbd5e1;
+}
+
 /* ── Smooth Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
