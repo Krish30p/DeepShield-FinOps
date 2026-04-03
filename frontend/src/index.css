@@ -1,1 +1,139 @@
 @import "tailwindcss";
+
+/* ── Pipeline Step Glow Animation ── */
+@keyframes pipeline-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(129, 140, 248, 0.4),
+                0 0 20px 4px rgba(129, 140, 248, 0.2);
+    border-color: rgba(129, 140, 248, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px 6px rgba(129, 140, 248, 0.6),
+                0 0 40px 10px rgba(129, 140, 248, 0.3);
+    border-color: rgba(129, 140, 248, 0.9);
+  }
+}
+
+@keyframes pipeline-pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    background-color: rgb(129, 140, 248);
+    box-shadow: 0 0 6px 2px rgba(129, 140, 248, 0.5);
+  }
+  50% {
+    transform: scale(1.35);
+    background-color: rgb(165, 180, 252);
+    box-shadow: 0 0 12px 4px rgba(165, 180, 252, 0.7);
+  }
+}
+
+@keyframes pipeline-checkmark {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pipeline-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pipeline step states */
+.pipeline-step-idle .pipeline-dot {
+  background-color: rgb(51, 65, 85);
+  border-color: rgb(15, 23, 42);
+  transition: all 0.3s ease;
+}
+
+.pipeline-step-idle .pipeline-label {
+  color: rgb(148, 163, 184);
+  border-color: rgba(51, 65, 85, 0.5);
+  background-color: rgba(15, 23, 42, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* Active / currently processing */
+.pipeline-step-active .pipeline-dot {
+  animation: pipeline-pulse-dot 1.2s ease-in-out infinite;
+  border-color: rgb(129, 140, 248) !important;
+}
+
+.pipeline-step-active .pipeline-label {
+  animation: pipeline-glow 1.8s ease-in-out infinite;
+  color: white;
+  background: linear-gradient(135deg, rgba(67, 56, 202, 0.25), rgba(129, 140, 248, 0.15));
+  border-color: rgba(129, 140, 248, 0.6);
+}
+
+.pipeline-step-active .pipeline-label-text {
+  color: rgb(199, 210, 254);
+  font-weight: 600;
+}
+
+.pipeline-step-active .pipeline-status-text {
+  color: rgb(165, 180, 252);
+}
+
+/* Completed */
+.pipeline-step-complete .pipeline-dot {
+  background-color: rgb(34, 197, 94) !important;
+  border-color: rgb(15, 23, 42) !important;
+  box-shadow: 0 0 8px 2px rgba(34, 197, 94, 0.4);
+  animation: pipeline-checkmark 0.4s ease-out;
+  transition: all 0.3s ease;
+}
+
+.pipeline-step-complete .pipeline-label {
+  color: rgb(187, 247, 208);
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.08);
+  transition: all 0.5s ease;
+}
+
+.pipeline-step-complete .pipeline-label-text {
+  color: rgb(187, 247, 208);
+}
+
+.pipeline-step-complete .pipeline-status-text {
+  color: rgb(74, 222, 128);
+}
+
+/* Log entry entrance animation */
+.audit-log-enter {
+  animation: pipeline-slide-up 0.5s ease-out;
+}
+
+/* Connector line fill animation */
+@keyframes connector-fill {
+  from { height: 0%; }
+  to { height: 100%; }
+}
+
+.pipeline-connector-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-connector-active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to bottom, rgb(129, 140, 248), rgb(34, 197, 94));
+  animation: connector-fill 0.6s ease-out forwards;
+}
