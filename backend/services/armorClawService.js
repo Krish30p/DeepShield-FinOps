@@ -9,6 +9,26 @@ const __dirname = path.dirname(__filename);
 const policyPath = path.join(__dirname, "../policies/armorClawPolicy.json");
 const armorClawPolicy = JSON.parse(fs.readFileSync(policyPath, "utf-8"));
 
+export const runArmorClawChecks = (asset, quantity, provenance) => {
+  // Rule 1: Provenance check
+  if (!provenance || !provenance.includes("sec.gov")) {
+    return { isSafe: false, blockReason: "Missing verified SEC.gov provenance URL" };
+  }
+
+  // Rule 2: Whitelist check
+  const whitelist = ["AAPL", "MSFT", "NVDA", "TSLA"];
+  if (!whitelist.includes(asset)) {
+    return { isSafe: false, blockReason: "Asset not on approved whitelist" };
+  }
+
+  // Rule 3: Blast Radius check
+  if (quantity > 50) {
+    return { isSafe: false, blockReason: "Trade exceeds maximum risk limit of 50 shares" };
+  }
+
+  return { isSafe: true, blockReason: null };
+};
+
 export const evaluatePolicy = (intentPayload) => {
   const { ticker, quantity, verification_provenance } = intentPayload;
   const rules = armorClawPolicy.rules;
