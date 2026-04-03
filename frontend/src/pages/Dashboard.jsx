@@ -254,7 +254,7 @@ export default function Dashboard() {
               {simulationResult && (
                 <div className={`audit-log-enter mt-5 p-4 rounded-xl border ${simulationResult.type === 'success' ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/5 border-rose-500/20 text-rose-400'}`}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-1">Result</p>
-                  <p className="text-xs opacity-80">{simulationResult.type === 'success' ? simulationResult.data.message : simulationResult.data.reason || simulationResult.data.error}</p>
+                  <p className="text-xs opacity-80">{simulationResult.type === 'success' ? simulationResult.data.message : simulationResult.data.message || simulationResult.data.reason || simulationResult.data.error || "An unknown error occurred."}</p>
                 </div>
               )}
             </div>

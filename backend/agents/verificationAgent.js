@@ -7,28 +7,13 @@
 export const sec_edgar_search = async (query) => {
   const queryLower = query.toLowerCase();
 
-  // If the input contains negative/attack keywords
-  if (
-    queryLower.includes("scandal") ||
-    queryLower.includes("resign") ||
-    queryLower.includes("bankrupt")
-  ) {
-    return "http://unverified-news.com/scandal";
-  }
-
-  // If the input contains positive/normal keywords
-  if (
-    queryLower.includes("earnings") ||
-    queryLower.includes("apple") ||
-    queryLower.includes("partnership") ||
-    queryLower.includes("buy") ||
-    queryLower.includes("soaring")
-  ) {
+  // If the input explicitly references an SEC source
+  if (queryLower.includes("sec.gov")) {
     return "https://www.sec.gov/ix?doc=/Archives/edgar/data/mocked_valid_report.htm";
   }
 
-  // Default fallback
-  return "https://www.sec.gov/ix?doc=/Archives/edgar/data/mocked_valid_report.htm";
+  // Default fallback for unverified social media, leaks, blogs, etc.
+  return "Unverified Social Media Source";
 };
 
 // OpenClaw Tool Configuration
@@ -86,11 +71,10 @@ export const runVerificationAgent = async (ingestionData) => {
   // Return the strict JSON output expected by ArmorClaw middleware
   // Note: changing 'ticker' to 'asset' internally based on your JSON schema target
   const intentPayload = {
-    // The previously defined schema used 'ticker', so we map asset to ticker for compatibility if needed.
-    ticker: ingestionData.ticker, // Keeping ticker for compatibility with rest of API, but structuring similar to instructions
+    ticker: ingestionData.ticker,
     asset: ingestionData.ticker,
     action: ingestionData.recommendedAction || "HOLD",
-    quantity: 10,
+    quantity: ingestionData.quantity,
     rationale: "News summary validated via tool execution.",
     verification_provenance: provenanceUrl,
   };

@@ -42,28 +42,32 @@ export const runIngestionAgent = async (newsText) => {
   }
 
   // 2. Asset Extraction (Blindly extract 1-5 char symbol)
+  const knownTickers = ["AAPL", "MSFT", "NVDA", "TSLA", "GME", "SHIB", "TGEN"];
   let tickerMatch = "UNKNOWN";
-  const tickerRegex = /\b(?:BUY|SELL|OF|IS|INVEST(?: IN)?|DUMP)\s+([A-Z]{1,5})\b/i;
-  let match = newsText.match(tickerRegex);
-  
-  if (match) {
-    tickerMatch = match[1].toUpperCase();
-  } else {
-    const generalTickerRegex = /\b([A-Z]{1,5})\b/g;
-    const allMatches = [...newsText.matchAll(generalTickerRegex)];
-    const keywords = ["BUY", "SELL", "SHARES", "STOCK", "TRADE", "OF", "THE", "IS", "FOR", "INVEST", "DUMP", "EXIT"];
-    
-    for (const m of allMatches) {
-      if (!keywords.includes(m[1].toUpperCase())) {
-        tickerMatch = m[1].toUpperCase();
-        break;
+  for (const t of knownTickers) {
+      if (upperText.includes(t)) {
+          tickerMatch = t;
+          break;
       }
-    }
+  }
+
+  // Fallback if not in the list
+  if (tickerMatch === "UNKNOWN") {
+      const fallbackRegex = /\b([A-Z]{3,5})\b/g;
+      const allMatches = [...newsText.matchAll(fallbackRegex)];
+      const keywords = ["BUY", "SELL", "SHARES", "STOCK", "TRADE", "OF", "THE", "IS", "FOR", "INVEST", "DUMP", "EXIT", "SEC"];
+      
+      for (const m of allMatches) {
+        if (!keywords.includes(m[1].toUpperCase())) {
+          tickerMatch = m[1].toUpperCase();
+          break;
+        }
+      }
   }
 
   // 3. Quantity Extraction
   let quantity = 1; // Default
-  const qtyRegex = /(\d+(?:,\d+)?)/;
+  const qtyRegex = /\b(\d+(?:,\d+)?)\s*(?:share|shares|SHIB|tokens)\b/i;
   const qtyMatch = newsText.match(qtyRegex);
   if (qtyMatch) {
     quantity = parseInt(qtyMatch[1].replace(/,/g, ""), 10);
