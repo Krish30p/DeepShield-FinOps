@@ -1,11 +1,11 @@
 {
   "policyName": "Strict Financial Security Guardrails",
-  "version": "1.0",
+  "version": "2.0",
   "rules": {
     "allowed_tickers": {
-      "type": "enum",
-      "values": ["AAPL", "MSFT", "NVDA", "GOOGL"],
-      "message": "Ticker is not explicitly authorized for trading."
+      "type": "dynamic_sec_lookup",
+      "source": "https://www.sec.gov/files/company_tickers.json",
+      "message": "Ticker is not registered with the SEC and is not authorized for trading."
     },
     "max_order_notional": {
       "type": "max_value",

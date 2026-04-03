@@ -28,7 +28,7 @@ export const execute_alpaca_trade = async (intentPayload) => {
 
   // =========================================================================
   // ArmorClaw Middleware Policy Check
-  const { isSafe, blockReason } = runArmorClawChecks(asset, quantity, verification_provenance);
+  const { isSafe, blockReason } = await runArmorClawChecks(asset, quantity, verification_provenance);
   
   if (!isSafe) {
     auditLog.status = "BLOCKED";

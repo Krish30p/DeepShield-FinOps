@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isValidSECTicker } from "./secEdgarService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const policyPath = path.join(__dirname, "../policies/armorClawPolicy.json");
 const armorClawPolicy = JSON.parse(fs.readFileSync(policyPath, "utf-8"));
 
-export const runArmorClawChecks = (asset, quantity, provenance) => {
+export const runArmorClawChecks = async (asset, quantity, provenance) => {
   // Step 1: Sanitize Inputs
   const cleanAsset = String(asset).trim().toUpperCase();
   const cleanQuantity = Number(quantity);
@@ -24,11 +25,18 @@ export const runArmorClawChecks = (asset, quantity, provenance) => {
     return { isSafe: false, blockReason: "Missing verified SEC.gov provenance URL" };
   }
 
-  // Rule 2: Whitelist check
-  const whitelist = ["AAPL", "MSFT", "NVDA", "TSLA"];
-  if (!whitelist.includes(cleanAsset)) {
-    return { isSafe: false, blockReason: "Asset not on approved whitelist" };
+  // Rule 2: DYNAMIC SEC EDGAR Whitelist check (replaces hardcoded array!)
+  //   Instead of: const whitelist = ["AAPL", "MSFT", "NVDA", "TSLA"];
+  //   Now validates against the full SEC EDGAR database of 13,000+ registered companies
+  const secValidation = await isValidSECTicker(cleanAsset);
+  if (!secValidation.isValid) {
+    return { 
+      isSafe: false, 
+      blockReason: `Asset '${cleanAsset}' is not registered with the SEC and is not authorized for trading` 
+    };
   }
+
+  console.log(`✅ [ARMORCLAW] SEC-validated: ${cleanAsset} = ${secValidation.companyName} (CIK: ${secValidation.cik})`);
 
   // Rule 3: Blast Radius check
   if (cleanQuantity > 50) {
@@ -38,23 +46,20 @@ export const runArmorClawChecks = (asset, quantity, provenance) => {
   return { isSafe: true, blockReason: null };
 };
 
-export const evaluatePolicy = (intentPayload) => {
+export const evaluatePolicy = async (intentPayload) => {
   const { ticker, quantity, verification_provenance } = intentPayload;
   const rules = armorClawPolicy.rules;
 
-  // 1. Check allowed tickers
-  if (!rules.allowed_tickers.values.includes(ticker)) {
+  // 1. DYNAMIC SEC EDGAR ticker validation (replaces hardcoded allowed_tickers list!)
+  const secValidation = await isValidSECTicker(ticker);
+  if (!secValidation.isValid) {
     return {
       allowed: false,
-      reason: rules.allowed_tickers.message,
+      reason: `${rules.allowed_tickers.message} '${ticker}' is not found in the SEC EDGAR database.`,
     };
   }
 
-  // 2. Check max order notional value (Assuming price mock or just using quantity as notional for simplicity in hackathon)
-  // In a real app we'd multiply quantity by current stock price.
-  // Here we assume quantity is the notional amount or we have a flat price assumption.
-  // Let's assume order size = quantity for this mock, or quantity * some mock price.
-  // We'll just enforce quantity <= max_order_notional.value for simplicity if we don't have a price oracle.
+  // 2. Check max order notional value
   const mockPrice = 150; // Mock price per share
   const notionalValue = quantity * mockPrice;
   if (notionalValue > rules.max_order_notional.value) {

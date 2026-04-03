@@ -224,7 +224,7 @@ export default function Dashboard() {
               <form onSubmit={handleTriggerPipeline}>
                 <textarea
                   className="w-full h-28 bg-slate-900/40 border border-slate-700/40 rounded-xl p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 focus:bg-slate-900/60 resize-none transition-all duration-300 ease-out"
-                  placeholder="Paste financial news... e.g., 'AAPL announces huge partnership, buy 50 shares.'"
+                  placeholder="Paste financial news... e.g., 'Buy 50 shares of Tesla based on SEC 8-K filing' — any SEC-registered company works!"
                   value={newsInput}
                   onChange={(e) => setNewsInput(e.target.value)}
                   disabled={isProcessing}
