@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shield, ShieldAlert, Activity, Cpu, Server, CheckCircle2, XOctagon, LogOut, Zap, Lock, Search, Send, ArrowRight } from "lucide-react";
 import AuthModal from "../components/AuthModal";
+import { BASE_URL } from "../utils/apiPath";
 
 const PIPELINE_STEPS = [
   { name: "Ingestion Agent", icon: Search, description: "Reading & parsing news data..." },
@@ -35,7 +36,7 @@ export default function Dashboard() {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:4000/api/logs");
+      const response = await axios.get(`${BASE_URL}/api/logs`);
       setLogs(response.data);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
@@ -94,7 +95,7 @@ export default function Dashboard() {
 
     let apiResult;
     try {
-      const response = await axios.post("http://localhost:4000/api/trigger-analysis", {
+      const response = await axios.post(`${BASE_URL}/api/trigger-analysis`, {
         newsText: newsInput,
       });
       apiResult = { type: "success", data: response.data };
