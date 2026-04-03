@@ -10,19 +10,28 @@ const policyPath = path.join(__dirname, "../policies/armorClawPolicy.json");
 const armorClawPolicy = JSON.parse(fs.readFileSync(policyPath, "utf-8"));
 
 export const runArmorClawChecks = (asset, quantity, provenance) => {
+  // Step 1: Sanitize Inputs
+  const cleanAsset = String(asset).trim().toUpperCase();
+  const cleanQuantity = Number(quantity);
+  const cleanProvenance = String(provenance).trim().toLowerCase();
+
+  // Step 2: Add Debug Logger
+  console.log(`🔍 [ARMORCLAW DEBUG] Received -> Asset: '${cleanAsset}', Qty: ${cleanQuantity}, Prov: '${cleanProvenance}'`);
+
+  // Step 3: Update Rule Evaluation
   // Rule 1: Provenance check
-  if (!provenance || !provenance.includes("sec.gov")) {
+  if (!cleanProvenance || !cleanProvenance.includes("sec.gov")) {
     return { isSafe: false, blockReason: "Missing verified SEC.gov provenance URL" };
   }
 
   // Rule 2: Whitelist check
   const whitelist = ["AAPL", "MSFT", "NVDA", "TSLA"];
-  if (!whitelist.includes(asset)) {
+  if (!whitelist.includes(cleanAsset)) {
     return { isSafe: false, blockReason: "Asset not on approved whitelist" };
   }
 
   // Rule 3: Blast Radius check
-  if (quantity > 50) {
+  if (cleanQuantity > 50) {
     return { isSafe: false, blockReason: "Trade exceeds maximum risk limit of 50 shares" };
   }
 
