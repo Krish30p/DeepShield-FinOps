@@ -9,7 +9,10 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
 
 //connect db
 connectDB();
@@ -23,10 +26,16 @@ app.use("/api", analysisRoutes); // /api/trigger-analysis, /api/audit-logs
 
 // routes
 app.get("/", (req, res) => {
-  res.send(" Backend Running on ");
+  res.send(" Backend Running on Vercel ");
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () =>
+    console.log(`Server running on port ${PORT}`)
+  );
+}
+
+// Export the Express app for Vercel Serverless Functions
+// Note: Since this file uses ES Modules (import), we use 'export default' instead of 'module.exports'
+export default app;
